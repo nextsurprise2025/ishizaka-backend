@@ -15,15 +15,15 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
-import { Roles } from '@/common/decorators/roles.decorator';
-import { PaginationQueryDto } from '@/common/dto/pagination.dto';
-import { RolesGuard } from '@/common/guards/roles.guard';
-import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
-
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
+
+import { Roles } from '@/common/decorators/roles.decorator';
+import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -35,14 +35,14 @@ export class UsersController {
 
   @Post()
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Create a new user (admin only)' })
+  @ApiOperation({ summary: 'ユーザー作成' })
   async create(@Body() dto: CreateUserDto): Promise<UserEntity> {
     return new UserEntity(await this.usersService.create(dto));
   }
 
   @Get()
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'List users (paginated)' })
+  @ApiOperation({ summary: 'ユーザー一覧取得' })
   async findAll(@Query() query: PaginationQueryDto) {
     const result = await this.usersService.findAll(query);
     return {
@@ -52,13 +52,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user by id' })
+  @ApiOperation({ summary: 'ユーザー取得' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserEntity> {
     return new UserEntity(await this.usersService.findOne(id));
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update user' })
+  @ApiOperation({ summary: 'ユーザー更新' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
@@ -68,7 +68,7 @@ export class UsersController {
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Soft delete user (admin only)' })
+  @ApiOperation({ summary: 'ユーザー削除' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<UserEntity> {
     return new UserEntity(await this.usersService.remove(id));
   }

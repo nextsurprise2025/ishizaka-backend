@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { LoggerModule } from 'nestjs-pino';
 
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { ValidationExceptionFilter } from './common/filters/validation-exception.filter';
+import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import { validationSchema } from './config/validation.schema';
@@ -18,30 +20,11 @@ import { PrismaModule } from './prisma/prisma.module';
       isGlobal: true,
       cache: true,
       load: [appConfig, databaseConfig],
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env'],
       validationSchema,
       validationOptions: {
         abortEarly: false,
       },
-    }),
-    LoggerModule.forRootAsync({
-      useFactory: () => ({
-        pinoHttp: {
-          level: process.env.LOG_LEVEL ?? 'info',
-          transport:
-            process.env.NODE_ENV !== 'production'
-              ? {
-                  target: 'pino-pretty',
-                  options: {
-                    singleLine: true,
-                    colorize: true,
-                    translateTime: 'SYS:standard',
-                  },
-                }
-              : undefined,
-          redact: ['req.headers.authorization', 'req.headers.cookie'],
-        },
-      }),
     }),
     ThrottlerModule.forRootAsync({
       useFactory: () => [
@@ -61,6 +44,18 @@ import { PrismaModule } from './prisma/prisma.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ValidationExceptionFilter,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

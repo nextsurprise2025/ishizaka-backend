@@ -1,16 +1,16 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 import {
   PaginationQueryDto,
   PaginatedResult,
   buildPaginatedResult,
-} from '@/common/dto/pagination.dto';
+} from '@/common/dtos/pagination.dto';
 import { PrismaService } from '@/prisma/prisma.service';
-
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -23,13 +23,25 @@ export class UsersService {
     }
 
     const hashed = await bcrypt.hash(dto.password, 10);
+    const hasProfile = Boolean(dto.username || dto.displayName);
+
     return this.prisma.user.create({
       data: {
         email: dto.email,
         password: hashed,
-        name: dto.name,
         role: dto.role,
+        status: dto.status,
+        rankId: dto.rankId,
+        ...(hasProfile && {
+          profile: {
+            create: {
+              username: dto.username,
+              displayName: dto.displayName,
+            },
+          },
+        }),
       },
+      include: { profile: true },
     });
   }
 
@@ -44,7 +56,16 @@ export class UsersService {
         ? {
             OR: [
               { email: { contains: query.search, mode: 'insensitive' } },
-              { name: { contains: query.search, mode: 'insensitive' } },
+              {
+                profile: {
+                  is: { username: { contains: query.search, mode: 'insensitive' } },
+                },
+              },
+              {
+                profile: {
+                  is: { displayName: { contains: query.search, mode: 'insensitive' } },
+                },
+              },
             ],
           }
         : {}),
@@ -55,7 +76,13 @@ export class UsersService {
       : { createdAt: query.sortOrder ?? 'desc' };
 
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({ where, skip, take: limit, orderBy }),
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: { profile: true },
+      }),
       this.prisma.user.count({ where }),
     ]);
 
@@ -63,7 +90,10 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.prisma.user.findFirst({ where: { id, deletedAt: null } });
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+      include: { profile: true },
+    });
     if (!user) {
       throw new NotFoundException(`User ${id} not found`);
     }
@@ -71,7 +101,10 @@ export class UsersService {
   }
 
   findByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: { profile: true },
+    });
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
@@ -83,7 +116,7 @@ export class UsersService {
     await this.findOne(id);
     return this.prisma.user.update({
       where: { id },
-      data: { deletedAt: new Date(), isActive: false },
+      data: { deletedAt: new Date(), status: UserStatus.INACTIVE },
     });
   }
 

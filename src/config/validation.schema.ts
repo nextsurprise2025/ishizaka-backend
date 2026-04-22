@@ -4,7 +4,7 @@ export const validationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test', 'staging')
     .default('development'),
-  PORT: Joi.number().default(3001),
+  PORT: Joi.number().default(8080),
   API_PREFIX: Joi.string().default('api'),
   API_VERSION: Joi.string().default('v1'),
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
@@ -22,7 +22,5 @@ export const validationSchema = Joi.object({
   SWAGGER_ENABLED: Joi.boolean().default(true),
   SWAGGER_PATH: Joi.string().default('docs'),
 
-  LOG_LEVEL: Joi.string()
-    .valid('trace', 'debug', 'info', 'warn', 'error', 'fatal')
-    .default('info'),
+  LOG_LEVEL: Joi.string().valid('trace', 'debug', 'info', 'warn', 'error', 'fatal').default('info'),
 });

@@ -15,18 +15,41 @@ enum Role {
   USER
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  password     String
-  name         String?
-  role         Role     @default(USER)
-  isActive     Boolean  @default(true)
-  refreshToken String?  @db.Text
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique @db.VarChar(255)
+  password     String     @db.VarChar(255)
+  rankId       String?    @map("rank_id") @db.Uuid
+  status       UserStatus @default(ACTIVE)
+  role         Role       @default(USER)
+  refreshToken String?    @map("refresh_token") @db.Text
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  profile UserProfile?
 
   @@index([email])
+  @@index([rankId])
   @@map("users")
+}
+
+model UserProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @map("user_id") @db.Uuid
+  username    String?  @db.VarChar(50)
+  displayName String?  @map("display_name") @db.VarChar(255)
+  address     String?  @db.VarChar(255)
+  phoneNumber String?  @map("phone_number") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
 }

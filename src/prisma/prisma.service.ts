@@ -1,4 +1,10 @@
-import { INestApplication, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  INestApplication,
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -40,7 +46,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       (key) => typeof key === 'string' && !key.startsWith('$') && !key.startsWith('_'),
     );
     return this.$transaction(
-      modelNames.map((modelName) => (this as unknown as Record<string, { deleteMany: () => unknown }>)[modelName as string].deleteMany() as never),
+      modelNames.map(
+        (modelName) =>
+          (this as unknown as Record<string, { deleteMany: () => unknown }>)[
+            modelName as string
+          ].deleteMany() as never,
+      ),
     ) as unknown as Promise<void>;
   }
 }

@@ -1,14 +1,14 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { User, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-
-import { UsersService } from '@/modules/users/users.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
+
+import { UsersService } from '@/modules/users/users.service';
 
 export interface TokenPair {
   accessToken: string;
@@ -25,7 +25,7 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
-    if (!user || !user.isActive || user.deletedAt) return null;
+    if (!user || user.status !== UserStatus.ACTIVE || user.deletedAt) return null;
     const matches = await bcrypt.compare(password, user.password);
     return matches ? user : null;
   }
@@ -55,6 +55,9 @@ export class AuthService {
     const user = await this.usersService.findOne(userId);
     if (!user.refreshToken) {
       throw new ForbiddenException('Access denied');
+    }
+    if (user.status !== UserStatus.ACTIVE || user.deletedAt) {
+      throw new ForbiddenException('Account is not active');
     }
     const matches = await bcrypt.compare(refreshToken, user.refreshToken);
     if (!matches) {

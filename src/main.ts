@@ -1,22 +1,18 @@
-import compression from 'compression';
-import helmet from 'helmet';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import compression from 'compression';
+import helmet from 'helmet';
 
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { setupSwagger } from './config/swagger.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('app.port', 3001);
+  const port = configService.get<number>('app.port', 8080);
   const apiPrefix = configService.get<string>('app.apiPrefix', 'api');
   const corsOrigin = configService.get<string>('app.corsOrigin', '*');
   const swaggerEnabled = configService.get<boolean>('app.swagger.enabled', true);
@@ -48,10 +44,6 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-
-  // Global filters & interceptors
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
 
   // Swagger
   if (swaggerEnabled) {

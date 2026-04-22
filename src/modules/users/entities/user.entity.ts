@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Role, User } from '@prisma/client';
+import { Role, User, UserStatus } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
 export class UserEntity implements Omit<User, 'password' | 'refreshToken'> {
@@ -10,13 +10,13 @@ export class UserEntity implements Omit<User, 'password' | 'refreshToken'> {
   email!: string;
 
   @ApiProperty({ nullable: true })
-  name!: string | null;
+  rankId!: string | null;
+
+  @ApiProperty({ enum: UserStatus })
+  status!: UserStatus;
 
   @ApiProperty({ enum: Role })
   role!: Role;
-
-  @ApiProperty()
-  isActive!: boolean;
 
   @ApiProperty()
   createdAt!: Date;

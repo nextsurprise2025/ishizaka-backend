@@ -32,7 +32,7 @@ COPY --from=builder /app/prisma ./prisma
 
 RUN npm prune --omit=dev
 
-EXPOSE 3001
+EXPOSE 8080
 
 USER node
 

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { UserStatus } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UsersService } from '@/modules/users/users.service';
@@ -26,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: JwtPayload) {
     const user = await this.usersService.findByEmail(payload.email);
-    if (!user || !user.isActive || user.deletedAt) {
+    if (!user || user.status !== UserStatus.ACTIVE || user.deletedAt) {
       throw new UnauthorizedException('Invalid token');
     }
     return { sub: user.id, email: user.email, role: user.role };

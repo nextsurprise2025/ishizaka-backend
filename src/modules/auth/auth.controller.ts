@@ -10,16 +10,16 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { CurrentUser, RequestUser } from '@/common/decorators/current-user.decorator';
-import { Public } from '@/common/decorators/public.decorator';
-import { UserEntity } from '@/modules/users/entities/user.entity';
-
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+
+import { CurrentUser, RequestUser } from '@/common/decorators/current-user.decorator';
+import { Public } from '@/common/decorators/public.decorator';
+import { UserEntity } from '@/modules/users/entities/user.entity';
 
 @ApiTags('Auth')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -30,7 +30,7 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register a new user' })
+  @ApiOperation({ summary: 'ユーザー登録' })
   async register(@Body() dto: RegisterDto) {
     const { user, accessToken, refreshToken } = await this.authService.register(dto);
     return { user: new UserEntity(user), accessToken, refreshToken };
@@ -39,7 +39,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({ summary: 'ログイン' })
   async login(@Body() dto: LoginDto) {
     const { user, accessToken, refreshToken } = await this.authService.login(dto);
     return { user: new UserEntity(user), accessToken, refreshToken };
@@ -49,7 +49,7 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh tokens' })
+  @ApiOperation({ summary: 'リフレッシュトークンでアクセストークン更新' })
   async refresh(
     @CurrentUser() user: RequestUser & { refreshToken: string },
     @Body() _dto: RefreshTokenDto,
@@ -61,7 +61,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Logout (invalidate refresh token)' })
+  @ApiOperation({ summary: 'ログアウト' })
   async logout(@CurrentUser() user: RequestUser) {
     await this.authService.logout(user.sub);
   }
@@ -70,7 +70,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @Post('me')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get current authenticated user' })
+  @ApiOperation({ summary: '現在のユーザー取得' })
   me(@CurrentUser() user: RequestUser) {
     return user;
   }

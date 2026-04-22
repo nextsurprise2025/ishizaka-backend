@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { Role, UserStatus } from '@prisma/client';
 import {
   IsEmail,
   IsEnum,
@@ -18,7 +18,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     example: 'StrongPass@123',
-    description: 'At least 8 chars, 1 uppercase, 1 number, 1 special',
+    description: 'At least 8 chars, 1 uppercase, 1 lowercase, 1 number or special char',
   })
   @IsString()
   @MinLength(8)
@@ -28,14 +28,30 @@ export class CreateUserDto {
   })
   password!: string;
 
-  @ApiPropertyOptional({ example: 'John Doe' })
+  @ApiPropertyOptional({ example: 'john_doe', maxLength: 50 })
   @IsOptional()
   @IsString()
-  @MaxLength(120)
-  name?: string;
+  @MaxLength(50)
+  username?: string;
+
+  @ApiPropertyOptional({ example: 'John Doe', maxLength: 255 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  displayName?: string;
 
   @ApiPropertyOptional({ enum: Role, default: Role.USER })
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
+
+  @ApiPropertyOptional({ enum: UserStatus, default: UserStatus.ACTIVE })
+  @IsOptional()
+  @IsEnum(UserStatus)
+  status?: UserStatus;
+
+  @ApiPropertyOptional({ description: 'Optional rank FK', nullable: true })
+  @IsOptional()
+  @IsString()
+  rankId?: string;
 }

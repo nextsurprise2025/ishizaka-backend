@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient, Role, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -13,9 +13,16 @@ async function main() {
     create: {
       email: 'admin@example.com',
       password: adminPassword,
-      name: 'Admin',
       role: Role.ADMIN,
+      status: UserStatus.ACTIVE,
+      profile: {
+        create: {
+          username: 'admin',
+          displayName: 'Administrator',
+        },
+      },
     },
+    include: { profile: true },
   });
 
   const user = await prisma.user.upsert({
@@ -24,9 +31,16 @@ async function main() {
     create: {
       email: 'user@example.com',
       password: userPassword,
-      name: 'Demo User',
       role: Role.USER,
+      status: UserStatus.ACTIVE,
+      profile: {
+        create: {
+          username: 'demo',
+          displayName: 'Demo User',
+        },
+      },
     },
+    include: { profile: true },
   });
 
   // eslint-disable-next-line no-console
