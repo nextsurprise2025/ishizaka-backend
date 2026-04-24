@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -20,12 +21,16 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { CurrentUser, RequestUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
 import { UserEntity } from '@/modules/users/entities/user.entity';
+import { UsersService } from '@/modules/users/users.service';
 
 @ApiTags('Auth')
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Public()
   @Post('register')
@@ -68,10 +73,11 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
-  @Post('me')
+  @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '現在のユーザー取得' })
-  me(@CurrentUser() user: RequestUser) {
-    return user;
+  async me(@CurrentUser() current: RequestUser): Promise<UserEntity> {
+    const user = await this.usersService.findOne(current.sub);
+    return new UserEntity(user);
   }
 }
