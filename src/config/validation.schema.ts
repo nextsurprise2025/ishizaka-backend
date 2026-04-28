@@ -23,4 +23,10 @@ export const validationSchema = Joi.object({
   SWAGGER_PATH: Joi.string().default('docs'),
 
   LOG_LEVEL: Joi.string().valid('trace', 'debug', 'info', 'warn', 'error', 'fatal').default('info'),
+
+  SENTRY_DSN: Joi.string().uri().optional().allow(''),
+  SENTRY_ENVIRONMENT: Joi.string().optional().allow(''),
+  SENTRY_RELEASE: Joi.string().optional().allow(''),
+  SENTRY_TRACES_SAMPLE_RATE: Joi.number().min(0).max(1).default(0.1),
+  SENTRY_PROFILES_SAMPLE_RATE: Joi.number().min(0).max(1).default(1.0),
 });
